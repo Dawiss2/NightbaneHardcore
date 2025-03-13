@@ -141,8 +141,8 @@ public static class Hardcore
 
             if (Configuration.DiscordDeathlog)
             {
-                var WebHookId = Configuration.DiscordWebhookID;
-                var WebHookToken = Configuration.DiscordWebhookToken;
+                var WebHookId = Configuration.DiscordWebhookIDPvP;
+                var WebHookToken = Configuration.DiscordWebhookTokenPvP;
                 const string colorRed = "FF0000";
                 var SuccessWebHook = new
                 {
