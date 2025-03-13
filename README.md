@@ -4,6 +4,11 @@
 
 Welcome to **NightbaneHardcore**, a hardcore survival experience designed to test your skills and resilience! This mod introduces punishing mechanics to elevate your gameplay. Ready to face the ultimate challenge?
 
+---
+
+## Warning
+- **This mod was designed for solo gameplay. When you die, your entire castle gets deleted, SteamID of your character is set to 0 and you are kicked from the server.**
+
 ## Known Bugs
 
 - **Dying from sun will be detected as PvP Death.**
@@ -15,7 +20,7 @@ Welcome to **NightbaneHardcore**, a hardcore survival experience designed to tes
 - **Discord Deathlog**: Log every demise to Discord for a permanent record.
 - **Bloodmoon PvP**: PvP activates during bloodmoons—survive or conquer.
 - **Boosted Drops During Bloodmoon**: Higher drop rates make the chaos rewarding.
-- **No Item Drops**: Items are removed on death instead of dropped, preventing boosts to other players.
+- **Disable dropping items from your inventory**: Use it to avoid situations where high level player crafts high end gear for his low level friend that just joined the server.
 - **Last Words**: Your final message echoes in the chat announcement.
 
 ---
@@ -85,7 +90,7 @@ Customize your **NightbaneHardcore** experience with the following config option
   - Default: `true`
 
 - **`LockItemDropping`**  
-  *Prevent players from dropping items.*  
+  *Prevent players from dropping items on ground.*  
   - Type: `Boolean`  
   - Default: `true`
 
