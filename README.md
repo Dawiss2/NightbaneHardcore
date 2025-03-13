@@ -4,7 +4,9 @@
 
 Welcome to **NightbaneHardcore**, a hardcore survival experience designed to test your skills and resilience! This mod introduces punishing mechanics to elevate your gameplay. Ready to face the ultimate challenge?
 
----
+## Known Bugs
+
+- **Dying from sun will be detected as PvP Death.**
 
 ## Features
 
