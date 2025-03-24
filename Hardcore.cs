@@ -31,8 +31,6 @@ public static class Hardcore
 {
     static MonoBehaviour monoBehaviour;
     private static HttpClient httpClient = new HttpClient();
-    public static ServerScriptMapper serverScriptMapper;
-    public static ServerGameManager serverGameManager;
     public static ServerGameSettingsSystem serverGameSettingsSystem;
     public static DebugEventsSystem debugEventsSystem;
     public static NetworkIdSystem.Singleton networkIdSystem;
@@ -61,9 +59,9 @@ public static class Hardcore
         if (Initialized) return;
 
         serverGameSettingsSystem = VWorld.Server.GetExistingSystemManaged<ServerGameSettingsSystem>();
-        serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
-        serverGameManager = serverScriptMapper._ServerGameManager;
         debugEventsSystem = VWorld.Server.GetExistingSystemManaged<DebugEventsSystem>();
+
+        var serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
         networkIdSystem = serverScriptMapper.GetSingleton<NetworkIdSystem.Singleton>();
 
         var serverGameBalanceSettings = serverGameSettingsSystem._Settings.ToStruct();
@@ -133,6 +131,9 @@ public static class Hardcore
         Equipment vampireEquipment = vampireEntity.Read<Equipment>();
         float vampireLevel = vampireEquipment.ArmorLevel + vampireEquipment.SpellLevel + vampireEquipment.WeaponLevel;
 
+        var _serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
+        var _serverGameManager = _serverScriptMapper._ServerGameManager;
+
         if (playerKiller)
         {
             Equipment killerEquipment = killerEntity.Read<Equipment>();
@@ -164,7 +165,7 @@ public static class Hardcore
                 httpClient.PostAsync(EndPoint, content);
             }
 
-            StatChangeUtility.KillEntity(VWorld.Server.EntityManager, vampireEntity, serverGameManager.ServerTime, StatChangeReason.Default);
+            StatChangeUtility.KillEntity(VWorld.Server.EntityManager, vampireEntity, _serverGameManager.ServerTime, StatChangeReason.Default);
         }
         else
         {
@@ -330,24 +331,18 @@ public static class Hardcore
         }
 
     }
-
-    public static IEnumerable<List<T>> Chunk<T>(this List<T> source, int chunkSize)
-    {
-        for (int i = 0; i < source.Count; i += chunkSize)
-        {
-            yield return source.GetRange(i, Math.Min(chunkSize, source.Count - i));
-        }
-    }
     public static void PvPOnBloodmoon()
     {
+        var _serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
+        var _serverGameManager = _serverScriptMapper._ServerGameManager;
 
-        bool IsBloodMoonDay = serverGameManager.DayNightCycle.IsBloodMoonDay();
+        bool IsBloodMoonDay = _serverGameManager.DayNightCycle.IsBloodMoonDay();
 
         var entityGameBalanceSettings = Helper.GetEntitiesByComponentType<ServerGameBalanceSettings>()[0];
         var serverGameBalanceSettings = serverGameSettingsSystem._Settings.ToStruct();
 
 
-        float timeSinceDayStart = serverGameManager.DayNightCycle.TimeSinceDayStart;
+        float timeSinceDayStart = _serverGameManager.DayNightCycle.TimeSinceDayStart;
 
         if (timeSinceDayStart < 361f && IsBloodMoonDay)
         {
