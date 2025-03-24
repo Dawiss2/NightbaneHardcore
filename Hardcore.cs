@@ -354,7 +354,7 @@ public static class Hardcore
             if (IsBloodMoonDay && !HigherDropRateEnabled)
             {
                 HigherDropRateEnabled = true;
-                serverGameBalanceSettings.DropTableModifier_General = (half)3;
+                serverGameBalanceSettings.DropTableModifier_General = (half)Configuration.DropRateOnBloodmoon;
                 VWorld.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
                 ServerChatUtils.SendSystemMessageToAllClients(VWorld.Server.EntityManager, $"<color=red>The Blood Moon rises, X{Configuration.DropRateOnBloodmoon} Drop Rate is now ACTIVE!");
             }
