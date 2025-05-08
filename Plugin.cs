@@ -7,7 +7,6 @@ using VampireCommandFramework;
 namespace NightbaneHardcore;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-[BepInDependency("gg.deca.Bloodstone")]
 public class Plugin : BasePlugin
 {
     Harmony _harmony;
