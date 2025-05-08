@@ -1,15 +1,57 @@
 
 using System;
+using System.Collections;
 using System.IO;
 using System.Text.Json;
-using Bloodstone.API;
 using Il2CppInterop.Runtime;
+using ProjectM;
+using ProjectM.Network;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace NightbaneHardcore;
 public static class Helper
 {
+	public static IEnumerator RepeatingCoroutine(Action action, float delay)
+	{
+		while (true)
+		{
+			yield return new WaitForSeconds(delay);
+			action?.Invoke();
+		}
+	}
+	public static void SendSystemMessageToClient(EntityManager entityManager, User user, string message)
+	{
+		FixedString512Bytes fixedMessage = message;
+		ServerChatUtils.SendSystemMessageToClient(entityManager, user, ref fixedMessage);
+	}
+	public static void SendSystemMessageToAllClients(EntityManager entityManager, string message)
+	{
+		FixedString512Bytes fixedMessage = message;
+		ServerChatUtils.SendSystemMessageToAllClients(entityManager, ref fixedMessage);
+	}
+	public static void TeleportUser(Entity User, Entity Character, float3 position)
+	{
+		var entity = Core.Server.EntityManager.CreateEntity(
+			ComponentType.ReadWrite<FromCharacter>(),
+			ComponentType.ReadWrite<PlayerTeleportDebugEvent>()
+		);
+
+		FromCharacter fromCharacter = new()
+		{
+			Character = Character,
+			User = User
+		};
+
+		Core.Server.EntityManager.SetComponentData(entity, fromCharacter);
+
+		Core.Server.EntityManager.SetComponentData<PlayerTeleportDebugEvent>(
+			entity,
+			new() { Position = position, Target = PlayerTeleportDebugEvent.TeleportTarget.Self });
+	}
+
 	public static NativeArray<Entity> GetEntitiesByComponentType<T1>(bool includeAll = false, bool includeDisabled = false, bool includeSpawn = false, bool includePrefab = false, bool includeDestroyed = false)
 	{
 		EntityQueryOptions options = EntityQueryOptions.Default;
@@ -25,7 +67,8 @@ public static class Helper
 			Options = options
 		};
 
-		var query = VWorld.Server.EntityManager.CreateEntityQuery(queryDesc);
+		var query = Core.Server.EntityManager.CreateEntityQuery(new ComponentType[] {
+					new(Il2CppType.Of<T1>(), ComponentType.AccessMode.ReadWrite)});
 
 		var entities = query.ToEntityArray(Allocator.Temp);
 		return entities;

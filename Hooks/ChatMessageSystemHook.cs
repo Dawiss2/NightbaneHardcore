@@ -2,7 +2,6 @@
 
 using System.IO;
 using System.Text.Json;
-using Bloody.Core;
 using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;

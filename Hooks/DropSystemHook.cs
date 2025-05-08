@@ -1,7 +1,3 @@
-
-
-using Bloodstone.API;
-using Bloody.Core;
 using HarmonyLib;
 using ProjectM;
 using ProjectM.Network;
@@ -18,7 +14,7 @@ public static class DropItemThrowSystemHook
     {
         if (Configuration.LockItemDropping)
         {
-            var entities = __instance.__query_1470978867_0.ToEntityArray(Allocator.Temp);
+            var entities = __instance.__query_1470978904_0.ToEntityArray(Allocator.Temp);
             try
             {
                 foreach (var entity in entities)
@@ -38,7 +34,7 @@ public static class DropItemThrowSystemHook
                             Hardcore.HandleDropItem(fromCharacter, dropEvent.SlotIndex);
                         }
 
-                        VWorld.Server.EntityManager.DestroyEntity(entity);
+                        Core.Server.EntityManager.DestroyEntity(entity);
                     }
                 }
             }
@@ -66,8 +62,8 @@ public static class DropItemSystemHook
                     if (entity.Has<DropEntireInventoryEvent>())
                     {
                         FromCharacter fromCharacter = entity.Read<FromCharacter>();
-                        ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, fromCharacter.User.Read<User>(), $"<color=red>You can't drop your inventory in Hardcore Mode!");
-                        VWorld.Server.EntityManager.DestroyEntity(entity);
+                        Helper.SendSystemMessageToClient(Core.Server.EntityManager, fromCharacter.User.Read<User>(), $"<color=red>You can't drop your inventory in Hardcore Mode!");
+                        Core.Server.EntityManager.DestroyEntity(entity);
                     }
                 }
             }
@@ -88,7 +84,7 @@ public static class DropItemSystemHook
                         FromCharacter fromCharacter = entity.Read<FromCharacter>();
                         Hardcore.HandleDropItem(fromCharacter, dropItemAtSlotEvent.SlotIndex);
 
-                        VWorld.Server.EntityManager.DestroyEntity(entity);
+                        Core.Server.EntityManager.DestroyEntity(entity);
                     }
                 }
             }
@@ -103,7 +99,7 @@ public static class DropItemSystemHook
             {
                 foreach (var entity in dropItemEvents2)
                 {
-                    VWorld.Server.EntityManager.DestroyEntity(entity);
+                    Core.Server.EntityManager.DestroyEntity(entity);
                 }
             }
             finally

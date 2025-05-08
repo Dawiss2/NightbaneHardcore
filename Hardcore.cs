@@ -1,10 +1,8 @@
 
-using Bloodstone.API;
 using ProjectM;
 using ProjectM.Network;
 using Unity.Collections;
 using Unity.Entities;
-using Bloody.Core;
 using UnityEngine;
 using System.Collections;
 using ProjectM.Physics;
@@ -13,9 +11,6 @@ using VampireCommandFramework;
 using ProjectM.Scripting;
 using ProjectM.Shared;
 using System.Collections.Generic;
-using Bloody.Core.Models.v1;
-using Bloody.Core.Methods;
-using Bloody.Core.API.v1;
 using Unity.Scenes;
 using HarmonyLib;
 using System.IO;
@@ -58,10 +53,10 @@ public static class Hardcore
     {
         if (Initialized) return;
 
-        serverGameSettingsSystem = VWorld.Server.GetExistingSystemManaged<ServerGameSettingsSystem>();
-        debugEventsSystem = VWorld.Server.GetExistingSystemManaged<DebugEventsSystem>();
+        serverGameSettingsSystem = Core.Server.GetExistingSystemManaged<ServerGameSettingsSystem>();
+        debugEventsSystem = Core.Server.GetExistingSystemManaged<DebugEventsSystem>();
 
-        var serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
+        var serverScriptMapper = Core.Server.GetExistingSystemManaged<ServerScriptMapper>();
         networkIdSystem = serverScriptMapper.GetSingleton<NetworkIdSystem.Singleton>();
 
         var serverGameBalanceSettings = serverGameSettingsSystem._Settings.ToStruct();
@@ -82,7 +77,7 @@ public static class Hardcore
         Deaths = Helper.LoadJson<int>(DeathsJson);
         ItemDropConfirms = Helper.LoadJson<List<ulong>>(ItemDropsJson);
 
-        CoroutineHandler.StartRepeatingCoroutine(() => { PvPOnBloodmoon(); }, 2f);
+        StartCoroutine(Helper.RepeatingCoroutine(() => { PvPOnBloodmoon(); }, 2f));
         Initialized = true;
     }
     public static void HandleDropItem(FromCharacter fromCharacter, int slotIndex)
@@ -91,14 +86,14 @@ public static class Hardcore
 
         if (!ItemDropConfirms.Contains(user.PlatformId))
         {
-            ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, user, $"<color=red>WARNING! item drops on ground is disabled in Hardcore Mode! If you want to remove your items, use <color=yellow>.dropenable<color=red> command, it will let you remove items instead of dropping.");
+            Helper.SendSystemMessageToClient(Core.Server.EntityManager, user, $"<color=red>WARNING! item drops on ground is disabled in Hardcore Mode! If you want to remove your items, use <color=yellow>.dropenable<color=red> command, it will let you remove items instead of dropping.");
             return;
         }
 
         DynamicBuffer<InventoryInstanceElement> inventoryInstanceElementBuffer = fromCharacter.Character.ReadBuffer<InventoryInstanceElement>();
         InventoryInstanceElement inventoryInstanceElement = inventoryInstanceElementBuffer[0];
 
-        InventoryUtilitiesServer.ClearSlot(VWorld.Server.EntityManager, inventoryInstanceElement.ExternalInventoryEntity._Entity, slotIndex);
+        InventoryUtilitiesServer.ClearSlot(Core.Server.EntityManager, inventoryInstanceElement.ExternalInventoryEntity._Entity, slotIndex);
     }
     public static void HandleDropItemChest(Entity chestEntity, FromCharacter fromCharacter, int slotIndex)
     {
@@ -106,23 +101,23 @@ public static class Hardcore
 
         if (!ItemDropConfirms.Contains(user.PlatformId))
         {
-            ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, user, $"<color=red>WARNING! item drops on ground is disabled in Hardcore Mode! If you want to remove your items, use <color=yellow>.dropenable<color=red> command, it will let you remove items instead of dropping.");
+            Helper.SendSystemMessageToClient(Core.Server.EntityManager, user, $"<color=red>WARNING! item drops on ground is disabled in Hardcore Mode! If you want to remove your items, use <color=yellow>.dropenable<color=red> command, it will let you remove items instead of dropping.");
             return;
         }
 
         DynamicBuffer<InventoryInstanceElement> inventoryInstanceElementBuffer = chestEntity.ReadBuffer<InventoryInstanceElement>();
         InventoryInstanceElement inventoryInstanceElement = inventoryInstanceElementBuffer[0];
 
-        InventoryUtilitiesServer.ClearSlot(VWorld.Server.EntityManager, inventoryInstanceElement.ExternalInventoryEntity._Entity, slotIndex);
+        InventoryUtilitiesServer.ClearSlot(Core.Server.EntityManager, inventoryInstanceElement.ExternalInventoryEntity._Entity, slotIndex);
     }
     public static void HardcoreDeath(Entity deathEntity)
     {
         Entity vampireEntity;
-        VampireDownedServerEventSystem.TryFindRootOwner(deathEntity, 1, VWorld.Server.EntityManager, out vampireEntity);
+        VampireDownedServerEventSystem.TryFindRootOwner(deathEntity, 1, Core.Server.EntityManager, out vampireEntity);
 
         var downBuff = deathEntity.Read<VampireDownedBuff>();
 
-        VampireDownedServerEventSystem.TryFindRootOwner(downBuff.Source, 1, VWorld.Server.EntityManager, out var killerEntity);
+        VampireDownedServerEventSystem.TryFindRootOwner(downBuff.Source, 1, Core.Server.EntityManager, out var killerEntity);
 
         var playerKiller = killerEntity.Has<PlayerCharacter>();
 
@@ -131,7 +126,7 @@ public static class Hardcore
         Equipment vampireEquipment = vampireEntity.Read<Equipment>();
         float vampireLevel = vampireEquipment.ArmorLevel + vampireEquipment.SpellLevel + vampireEquipment.WeaponLevel;
 
-        var _serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
+        var _serverScriptMapper = Core.Server.GetExistingSystemManaged<ServerScriptMapper>();
         var _serverGameManager = _serverScriptMapper._ServerGameManager;
 
         if (playerKiller)
@@ -165,7 +160,7 @@ public static class Hardcore
                 httpClient.PostAsync(EndPoint, content);
             }
 
-            StatChangeUtility.KillEntity(VWorld.Server.EntityManager, vampireEntity, _serverGameManager.ServerTime, StatChangeReason.Default);
+            StatChangeUtility.KillEntity(Core.Server.EntityManager, vampireEntity, _serverGameManager.ServerTime, StatChangeReason.Default);
         }
         else
         {
@@ -195,11 +190,10 @@ public static class Hardcore
             }
 
         }
-        UserModel userModel = Bloody.Core.GameData.v1.GameData.Users.FromEntity(UserEntity);
-        userModel.TeleportTo(new Unity.Mathematics.float3(-2016.0348f, 5f, -2778.0544f));
+        Helper.TeleportUser(UserEntity, vampireUser.LocalCharacter._Entity, new Unity.Mathematics.float3(-2016.0348f, 5f, -2778.0544f));
         if (Configuration.AnnounceDeaths)
         {
-            ServerChatUtils.SendSystemMessageToAllClients(VWorld.Server.EntityManager, $"<color=red><size=20>Vampire {vampireUser.CharacterName} Has died at level {Mathf.Floor(vampireLevel)}!");
+            Helper.SendSystemMessageToAllClients(Core.Server.EntityManager, $"<color=red><size=20>Vampire {vampireUser.CharacterName} Has died at level {Mathf.Floor(vampireLevel)}!");
         }
         StartCoroutine(KickPlayerWithDelay(UserEntity));
         StartCoroutine(DestroyCastleOnDeath(UserEntity));
@@ -223,21 +217,21 @@ public static class Hardcore
 
         User user = userEntity.Read<User>();
         string newName = user.CharacterName + Deaths.ToString();
-        UserModel userModel = Bloody.Core.GameData.v1.GameData.Users.FromEntity(userEntity);
+
         if (LastWords.ContainsKey(user.PlatformId) && Configuration.LastWords)
         {
-            ServerChatUtils.SendSystemMessageToAllClients(VWorld.Server.EntityManager, $"<color=red>Last Words: <color=yellow>{LastWords[user.PlatformId]}");
+            Helper.SendSystemMessageToAllClients(Core.Server.EntityManager, $"<color=red>Last Words: <color=yellow>{LastWords[user.PlatformId]}");
             LastWords.Remove(user.PlatformId);
 
             var jsonData = JsonSerializer.Serialize(LastWords, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(LastWordsJson, jsonData);
         }
-        ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, user, $"<color=red>You Died! Your character and castle is being removed.");
-        ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, user, $"<color=red>You will be kicked from server in 5 seconds...");
+        Helper.SendSystemMessageToClient(Core.Server.EntityManager, user, $"<color=red>You Died! Your character and castle is being removed.");
+        Helper.SendSystemMessageToClient(Core.Server.EntityManager, user, $"<color=red>You will be kicked from server in 5 seconds...");
 
 
         yield return new WaitForSeconds(5f);
-        Entity entity = VWorld.Server.EntityManager.CreateEntity(new ComponentType[3]
+        Entity entity = Core.Server.EntityManager.CreateEntity(new ComponentType[3]
         {
             ComponentType.ReadOnly<NetworkEventType>(),
             ComponentType.ReadOnly<SendEventToUser>(),
@@ -262,10 +256,7 @@ public static class Hardcore
         user.PlatformId = 0;
         userEntity.Write(user);
 
-
-
-
-        var networkId = VWorld.Server.EntityManager.GetComponentData<NetworkId>(userEntity);
+        var networkId = Core.Server.EntityManager.GetComponentData<NetworkId>(userEntity);
         var renameEvent = new RenameUserDebugEvent
         {
             NewName = newName,
@@ -274,7 +265,7 @@ public static class Hardcore
         var fromCharacter = new FromCharacter
         {
             User = userEntity,
-            Character = userModel.Character.Entity
+            Character = user.LocalCharacter._Entity
         };
 
         debugEventsSystem.RenameUser(fromCharacter, renameEvent);
@@ -284,7 +275,7 @@ public static class Hardcore
     {
         User userOwner = userEntity.Read<User>();
 
-        EntityManager entityManager = VWorld.Server.EntityManager;
+        EntityManager entityManager = Core.Server.EntityManager;
 
         EntityQueryOptions entityQueryOptions = EntityQueryOptions.IncludeAll;
 
@@ -333,7 +324,7 @@ public static class Hardcore
     }
     public static void PvPOnBloodmoon()
     {
-        var _serverScriptMapper = VWorld.Server.GetExistingSystemManaged<ServerScriptMapper>();
+        var _serverScriptMapper = Core.Server.GetExistingSystemManaged<ServerScriptMapper>();
         var _serverGameManager = _serverScriptMapper._ServerGameManager;
 
         bool IsBloodMoonDay = _serverGameManager.DayNightCycle.IsBloodMoonDay();
@@ -355,15 +346,15 @@ public static class Hardcore
             {
                 HigherDropRateEnabled = true;
                 serverGameBalanceSettings.DropTableModifier_General = (half)Configuration.DropRateOnBloodmoon;
-                VWorld.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
-                ServerChatUtils.SendSystemMessageToAllClients(VWorld.Server.EntityManager, $"<color=red>The Blood Moon rises, X{Configuration.DropRateOnBloodmoon} Drop Rate is now ACTIVE!");
+                Core.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
+                Helper.SendSystemMessageToAllClients(Core.Server.EntityManager, $"<color=red>The Blood Moon rises, X{Configuration.DropRateOnBloodmoon} Drop Rate is now ACTIVE!");
             }
             else if (!IsBloodMoonDay && HigherDropRateEnabled)
             {
                 HigherDropRateEnabled = false;
                 serverGameBalanceSettings.DropTableModifier_General = DefaultDropRate;
-                VWorld.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
-                ServerChatUtils.SendSystemMessageToAllClients(VWorld.Server.EntityManager, $"<color=green>The Blood Moon fades, drop rates are back to normal.");
+                Core.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
+                Helper.SendSystemMessageToAllClients(Core.Server.EntityManager, $"<color=green>The Blood Moon fades, drop rates are back to normal.");
             }
         }
 
@@ -373,13 +364,13 @@ public static class Hardcore
             {
                 PvPEnabled = true;
                 serverGameBalanceSettings.GameModeType = GameModeType.PvP;
-                VWorld.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
+                Core.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
             }
             else if (!IsBloodMoonDay && PvPEnabled)
             {
                 PvPEnabled = false;
                 serverGameBalanceSettings.GameModeType = GameModeType.PvE;
-                VWorld.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
+                Core.Server.EntityManager.SetComponentData(entityGameBalanceSettings, serverGameBalanceSettings);
             }
         }
     }

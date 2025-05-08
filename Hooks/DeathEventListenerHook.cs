@@ -1,6 +1,5 @@
-using Bloodstone.API;
-using Bloody.Core;
 using HarmonyLib;
+using NightbaneHardcore;
 using ProjectM;
 using ProjectM.Network;
 using Unity.Collections;
@@ -23,8 +22,8 @@ public static class DeathEventListenerHook
 
                     if (killEvent.Who.ToString() == "Self")
                     {
-                        VWorld.Server.EntityManager.DestroyEntity(entity);
-                        ServerChatUtils.SendSystemMessageToClient(VWorld.Server.EntityManager, fromCharacter.User.Read<User>(), $"<color=red>You can't use unstuck in Hardcore mode!");
+                        Core.Server.EntityManager.DestroyEntity(entity);
+                        Helper.SendSystemMessageToClient(Core.Server.EntityManager, fromCharacter.User.Read<User>(), $"<color=red>You can't use unstuck in Hardcore mode!");
                     }
                 }
             }

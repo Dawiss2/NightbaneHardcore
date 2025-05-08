@@ -1,7 +1,4 @@
 
-
-using Bloodstone.API;
-using Bloody.Core;
 using HarmonyLib;
 using NightbaneHardcore;
 using ProjectM;
